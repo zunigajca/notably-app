@@ -36,8 +36,3 @@ mongoose.connect(uri)
         console.error("!!! MONGODB CONNECTION ERROR ON STARTUP !!!");
         console.error(err);
     });
-
-
-
-// zunigajca_db_user aMPXU8ptzHWCXiq5
-// mongodb+srv://zunigajca_db_user:aMPXU8ptzHWCXiq5@cluster0.ltvijwl.mongodb.net/?appName=Cluster0
