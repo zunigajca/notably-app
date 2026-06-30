@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const User = require('../models/user');
+const User = require('../models/User');
 
 // JWT Secret Key (Fallback if process.env.JWT_SECRET isn't defined yet)
 const JWT_SECRET = process.env.JWT_SECRET || 'notably_super_secret_key_123';
