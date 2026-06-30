@@ -1,28 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import ReactQuill from 'react-quill-new'; // 👈 Import the rich text editor engine
+import 'react-quill-new/dist/quill.snow.css'; // 👈 Import default clean text toolbar skin
 
 function App() {
   const [notes, setNotes] = useState([]);
   const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
+  const [content, setContent] = useState(''); // 📝 Now stores rich HTML text instead of plain strings
   const [tagInput, setTagInput] = useState('');
   const [editingNoteId, setEditingNoteId] = useState(null);
   const [suggestedTags, setSuggestedTags] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // 🔑 NEW: Authentication States
+  // Authentication States
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('token') || '');
-  const [authMode, setAuthMode] = useState('login'); // 'login' or 'register'
+  const [authMode, setAuthMode] = useState('login');
   const [authUsername, setAuthUsername] = useState('');
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
   const [authError, setAuthError] = useState('');
 
-  // Production Backend API Base URL
   const API_BASE = 'https://notably-app-backend.onrender.com/api';
 
-  // Check localStorage for active session on load
+  // 🛠️ Quill Configuration: Customize exactly what tools show up in the toolbar
+  const quillModules = {
+    toolbar: [
+      [{ 'font': [] }, { 'size': ['small', false, 'large', 'huge'] }], // Font style & size adjustments
+      ['bold', 'italic', 'underline', 'strike'],                      // Inline style parameters
+      [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'list': 'check' }], // Bullet, outline format, and checklists
+      [{ 'indent': '-1' }, { 'indent': '+1' }],                        // Outlining indents
+      ['clean']                                                       // Clear formatting button
+    ]
+  };
+
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
     if (token && savedUser) {
@@ -30,7 +41,6 @@ function App() {
     }
   }, [token]);
 
-  // Fetch notes whenever token changes or matches a logged-in user
   useEffect(() => {
     if (token) {
       fetchNotes();
@@ -40,18 +50,14 @@ function App() {
     }
   }, [token]);
 
-  // Dynamically calculate top 6 most popular unique tags for this specific user
   useEffect(() => {
     if (notes.length > 0) {
       const allTags = notes.flatMap(note => note.tags || []);
       const tagCounts = allTags.reduce((acc, tag) => {
         const cleanTag = tag.trim();
-        if (cleanTag !== "") {
-          acc[cleanTag] = (acc[cleanTag] || 0) + 1;
-        }
+        if (cleanTag !== "") acc[cleanTag] = (acc[cleanTag] || 0) + 1;
         return acc;
       }, {});
-
       const sortedTags = Object.keys(tagCounts).sort((a, b) => tagCounts[b] - tagCounts[a]);
       setSuggestedTags(sortedTags.slice(0, 6));
     } else {
@@ -59,7 +65,6 @@ function App() {
     }
   }, [notes]);
 
-  // Helper config to attach Bearer token to Axios headers securely
   const getAuthConfig = () => ({
     headers: { Authorization: `Bearer ${token}` }
   });
@@ -74,7 +79,6 @@ function App() {
     }
   };
 
-  // 🔑 NEW: Auth Handlers
   const handleAuthSubmit = async (e) => {
     e.preventDefault();
     setAuthError('');
@@ -94,13 +98,10 @@ function App() {
           password: authPassword
         });
         const { token: userToken, user: userData } = response.data;
-        
         localStorage.setItem('token', userToken);
         localStorage.setItem('user', JSON.stringify(userData));
         setToken(userToken);
         setUser(userData);
-        
-        // Clear forms
         setAuthUsername('');
         setAuthEmail('');
         setAuthPassword('');
@@ -186,17 +187,10 @@ function App() {
           {user ? (
             <div className="flex items-center gap-4">
               <span className="text-sm font-medium text-slate-600">👋 Hi, <strong className="text-slate-900">{user.username}</strong></span>
-              <button 
-                onClick={handleSignOut}
-                className="cursor-pointer text-xs font-semibold bg-red-50 text-red-600 px-3 py-1.5 rounded-xl hover:bg-red-100 transition-colors"
-              >
-                Sign Out
-              </button>
+              <button onClick={handleSignOut} className="cursor-pointer text-xs font-semibold bg-red-50 text-red-600 px-3 py-1.5 rounded-xl hover:bg-red-100 transition-colors">Sign Out</button>
             </div>
           ) : (
-            <div className="text-xs font-semibold text-slate-400 bg-slate-100 px-2 py-1 rounded-md uppercase tracking-wider">
-              Secure Cloud Session
-            </div>
+            <div className="text-xs font-semibold text-slate-400 bg-slate-100 px-2 py-1 rounded-md uppercase tracking-wider">Secure Cloud Session</div>
           )}
         </div>
       </header>
@@ -207,31 +201,14 @@ function App() {
         {/* Left Column Panel */}
         <section className="lg:col-span-1">
           <div className="sticky top-24 rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
-            
-            {/* Condition 1: Render Auth Component if Logged Out */}
             {!user ? (
               <div>
                 <div className="flex border-b border-slate-100 mb-6 p-0.5 bg-slate-50 rounded-xl">
-                  <button 
-                    onClick={() => setAuthMode('login') || setAuthError('')}
-                    className={`w-full py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${authMode === 'login' ? 'bg-white text-indigo-600 shadow-xs' : 'text-slate-400 hover:text-slate-600'}`}
-                  >
-                    Sign In
-                  </button>
-                  <button 
-                    onClick={() => setAuthMode('register') || setAuthError('')}
-                    className={`w-full py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${authMode === 'register' ? 'bg-white text-indigo-600 shadow-xs' : 'text-slate-400 hover:text-slate-600'}`}
-                  >
-                    Sign Up
-                  </button>
+                  <button onClick={() => setAuthMode('login') || setAuthError('')} className={`w-full py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${authMode === 'login' ? 'bg-white text-indigo-600 shadow-xs' : 'text-slate-400 hover:text-slate-600'}`}>Sign In</button>
+                  <button onClick={() => setAuthMode('register') || setAuthError('')} className={`w-full py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${authMode === 'register' ? 'bg-white text-indigo-600 shadow-xs' : 'text-slate-400 hover:text-slate-600'}`}>Sign Up</button>
                 </div>
-
-                <h2 className="text-lg font-bold text-slate-900 mb-4">
-                  {authMode === 'login' ? '🔑 Welcome Back' : '✨ Join Notably'}
-                </h2>
-
+                <h2 className="text-lg font-bold text-slate-900 mb-4">{authMode === 'login' ? '🔑 Welcome Back' : '✨ Join Notably'}</h2>
                 {authError && <p className="mb-4 text-xs font-semibold text-red-600 bg-red-50 px-3 py-2 rounded-xl">{authError}</p>}
-
                 <form onSubmit={handleAuthSubmit} className="flex flex-col gap-4">
                   {authMode === 'register' && (
                     <div>
@@ -247,13 +224,10 @@ function App() {
                     <label className="block text-xs font-medium uppercase tracking-wide text-slate-500 mb-1">Password</label>
                     <input type="password" required placeholder="••••••••" value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm focus:border-indigo-500 focus:bg-white focus:outline-hidden" />
                   </div>
-                  <button type="submit" className="w-full cursor-pointer rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-xs hover:bg-indigo-700 mt-2">
-                    {authMode === 'login' ? 'Enter Workspace' : 'Create Account'}
-                  </button>
+                  <button type="submit" className="w-full cursor-pointer rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-xs hover:bg-indigo-700 mt-2">{authMode === 'login' ? 'Enter Workspace' : 'Create Account'}</button>
                 </form>
               </div>
             ) : (
-              /* Condition 2: Render Standard Note Creation Form if Logged In */
               <div>
                 <h2 className="mb-4 text-lg font-bold text-slate-900">{editingNoteId ? '✏️ Edit Note' : '✨ Create New Note'}</h2>
                 <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -263,7 +237,17 @@ function App() {
                   </div>
                   <div>
                     <label className="block text-xs font-medium uppercase tracking-wide text-slate-500 mb-1">Content</label>
-                    <textarea placeholder="Type your notes here..." value={content} onChange={(e) => setContent(e.target.value)} className="w-full min-h-[140px] rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm focus:border-indigo-500 focus:bg-white focus:outline-hidden" />
+                    {/* 🔄 Replaced textarea with the modular React Quill editor */}
+                    <div className="bg-slate-50 rounded-xl overflow-hidden border border-slate-200 focus-within:border-indigo-500 focus-within:bg-white">
+                      <ReactQuill 
+                        theme="snow"
+                        value={content}
+                        onChange={setContent}
+                        modules={quillModules}
+                        placeholder="Type and format your notes here..."
+                        className="prose max-w-none min-h-[160px]"
+                      />
+                    </div>
                   </div>
                   <div>
                     <label className="block text-xs font-medium uppercase tracking-wide text-slate-500 mb-1">Tags</label>
@@ -280,12 +264,8 @@ function App() {
                     )}
                   </div>
                   <div className="flex flex-col gap-2 mt-2">
-                    <button type="submit" className={`w-full cursor-pointer rounded-xl px-4 py-3 text-sm font-semibold text-white shadow-xs ${editingNoteId ? 'bg-amber-500 hover:bg-amber-600' : 'bg-indigo-600 hover:bg-indigo-700'}`}>
-                      {editingNoteId ? 'Update Changes' : 'Save Note'}
-                    </button>
-                    {editingNoteId && (
-                      <button type="button" onClick={handleCancelEdit} className="w-full cursor-pointer rounded-xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-200">Cancel Edit</button>
-                    )}
+                    <button type="submit" className={`w-full cursor-pointer rounded-xl px-4 py-3 text-sm font-semibold text-white shadow-xs ${editingNoteId ? 'bg-amber-500 hover:bg-amber-600' : 'bg-indigo-600 hover:bg-indigo-700'}`}>{editingNoteId ? 'Update Changes' : 'Save Note'}</button>
+                    {editingNoteId && <button type="button" onClick={handleCancelEdit} className="w-full cursor-pointer rounded-xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-200">Cancel Edit</button>}
                   </div>
                 </form>
               </div>
@@ -299,14 +279,7 @@ function App() {
             <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-slate-400">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.603 10.603Z" /></svg>
             </div>
-            <input 
-              type="text"
-              placeholder={user ? "Search your private notes..." : "Sign in to activate search filtering..."}
-              disabled={!user}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-2xl border border-slate-200 bg-white pl-11 pr-10 py-3.5 text-sm font-medium shadow-xs focus:border-indigo-500 focus:outline-hidden disabled:bg-slate-100 disabled:cursor-not-allowed"
-            />
+            <input type="text" placeholder={user ? "Search your private notes..." : "Sign in to activate search filtering..."} disabled={!user} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full rounded-2xl border border-slate-200 bg-white pl-11 pr-10 py-3.5 text-sm font-medium shadow-xs focus:border-indigo-500 focus:outline-hidden disabled:bg-slate-100 disabled:cursor-not-allowed" />
             {searchQuery && <button onClick={() => setSearchQuery('')} className="absolute inset-y-0 right-0 flex items-center pr-4 text-xs font-semibold text-slate-400 hover:text-slate-600 cursor-pointer">Clear</button>}
           </div>
 
@@ -318,7 +291,6 @@ function App() {
           </div>
 
           {!user ? (
-            /* Protected Landing View */
             <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-white p-12 text-center shadow-xs">
               <span className="text-4xl mb-3">🔒</span>
               <h3 className="text-base font-semibold text-slate-800">Workspace Encrypted</h3>
@@ -341,7 +313,12 @@ function App() {
                         <h3 className="font-bold text-slate-950 text-base leading-snug">{note.title}</h3>
                         <button onClick={() => setEditingNoteId(note._id) || setTitle(note.title) || setContent(note.content || '') || setTagInput(note.tags ? note.tags.join(', ') : '')} className="cursor-pointer p-1 text-slate-400 hover:text-slate-700"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" /></svg></button>
                       </div>
-                      <p className="text-slate-600 text-sm whitespace-pre-wrap line-clamp-4 mb-4">{note.content || "Empty content."}</p>
+                      
+                      {/* 🔄 Replaced text string parser with an innerHTML renderer to compile Rich HTML styles on screen */}
+                      <div 
+                        className="text-slate-600 text-sm prose prose-sm line-clamp-4 mb-4 max-w-none list-inside break-words"
+                        dangerouslySetInnerHTML={{ __html: note.content || "<i>Empty content.</i>" }}
+                      />
                     </div>
                     <div>
                       <div className="flex flex-wrap gap-1.5 mb-3">
