@@ -11,6 +11,32 @@ const app = express();
 const PORT = process.env.PORT || 2550;
 const uri = process.env.MONGODB_URI || process.env.MONGO_URI;
 
+// Example Backend Fix (Express.js)
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    // 1. Validate input
+    if (!email || !password) {
+      return res.status(400).json({ message: "Missing credentials" });
+    }
+
+    // 2. Check if user exists (preventing unhandled db errors)
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({ message: "User already exists" });
+    }
+    
+    // 3. Logic to save user...
+    const newUser = await User.create({ email, password });
+    res.status(201).json(newUser);
+
+  } catch (error) {
+    console.error("Registration Error:", error); // This shows up in Render logs
+    res.status(500).json({ error: "Internal Server Error", details: error.message });
+  }
+});
+
 // Configure CORS correctly
 app.use(cors({
   origin: 'https://notably-app-six.vercel.app', // 👈 Allows your specific frontend to talk to the backend
