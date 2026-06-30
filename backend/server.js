@@ -11,23 +11,24 @@ const app = express();
 const PORT = process.env.PORT || 2550;
 const uri = process.env.MONGODB_URI || process.env.MONGO_URI;
 
+const authRoutes = require('./routes/auth');
+const noteRoutes = require('./routes/notes');
+
 // Configure CORS correctly
 app.use(cors({
   origin: 'https://notably-app-six.vercel.app', // 👈 Allows your specific frontend to talk to the backend
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'] // 👈 Crucial for our new token headers!
+  allowedHeaders: ['Content-Type', 'Authorization'], // 👈 Crucial for our new token headers!
+  credentials: true // 👈 Ensures cookies and auth headers are sent correctly
 }));
 
-// ... existing requirements at top of server.js
-const authRoutes = require('./routes/auth');
-const noteRoutes = require('./routes/notes');
+// Middleware
+app.use(express.json()); // Allows us to parse JSON bodies
+app.use(express.urlencoded({ extended: true })); // 👈 Added as an extra layer of safety for payloads
 
 // ... existing database middleware mappings
 app.use('/api/auth', authRoutes); // 👈 New route registration line
 app.use('/api/notes', noteRoutes);
-
-// Middleware
-app.use(express.json()); // Allows us to parse JSON bodies
 
 // Sample Route
 app.get('/', (req, res) => {
