@@ -11,6 +11,14 @@ const app = express();
 const PORT = process.env.PORT || 2550;
 const uri = process.env.MONGODB_URI || process.env.MONGO_URI;
 
+// ... existing requirements at top of server.js
+const authRoutes = require('./routes/auth');
+const noteRoutes = require('./routes/notes');
+
+// ... existing database middleware mappings
+app.use('/api/auth', authRoutes); // 👈 New route registration line
+app.use('/api/notes', noteRoutes);
+
 // Middleware
 app.use(cors());
 app.use(express.json()); // Allows us to parse JSON bodies

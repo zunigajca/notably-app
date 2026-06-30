@@ -1,21 +1,26 @@
 const mongoose = require('mongoose');
 
-const NoteSchema = new mongoose.Schema({
-    title: {
-        type: String,
-        required: true,
-        trim: true
-    },
-    content: {
-        type: String,
-        default: ""
-    },
-    tags: [{
-        type: String,
-        trim: true
-    }]
+const noteSchema = new mongoose.Schema({
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    ref: 'User' // 👈 Binds this note directly to a user account
+  },
+  title: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  content: {
+    type: String,
+    trim: true
+  },
+  tags: {
+    type: [String],
+    default: ['general']
+  }
 }, {
-    timestamps: true // Automatically adds createdAt and updatedAt fields
+  timestamps: true
 });
 
-module.exports = mongoose.model('Note', NoteSchema);
+module.exports = mongoose.model('Note', noteSchema);
