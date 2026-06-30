@@ -38,7 +38,7 @@ function App() {
 
   const fetchNotes = async () => {
     try {
-      const response = await axios.get('http://localhost:2550/api/notes');
+      const response = await axios.get('https://your-render-app-name.onrender.com/api/notes');
       setNotes(response.data);
     } catch (error) {
       console.error("Error fetching notes:", error);
@@ -77,10 +77,10 @@ function App() {
 
     try {
       if (editingNoteId) {
-        await axios.put(`http://localhost:2550/api/notes/update/${editingNoteId}`, noteData);
+        await axios.put(`https://your-render-app-name.onrender.com/api/notes/update/${editingNoteId}`, noteData);
         setEditingNoteId(null);
       } else {
-        await axios.post('http://localhost:2550/api/notes/add', noteData);
+        await axios.post('https://your-render-app-name.onrender.com/api/notes/add', noteData);
       }
       
       setTitle('');
@@ -94,7 +94,7 @@ function App() {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:2550/api/notes/${id}`);
+      await axios.delete(`https://your-render-app-name.onrender.com/api/notes/${id}`);
       if (editingNoteId === id) handleCancelEdit();
       fetchNotes();
     } catch (error) {
